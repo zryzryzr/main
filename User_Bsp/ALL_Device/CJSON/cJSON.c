@@ -563,7 +563,7 @@ static const char *parse_object(cJSON *item,const char *value)
 	item->child=child=cJSON_New_Item();
 	if (!item->child) 
 	{
-		printf("file:%s\nfuncName:%s\nLine:%d\n",__FILE__, __FUNCTION__,__LINE__);			
+		//printf("file:%s\nfuncName:%s\nLine:%d\n",__FILE__, __FUNCTION__,__LINE__);			
 		printf("memory fail\n");
 		return 0;       /* memory fail */
 	}
@@ -577,10 +577,10 @@ static const char *parse_object(cJSON *item,const char *value)
 	while (*value==',')
 	{
 		cJSON *new_item;
-			printf("shenqing\n");		
+			//printf("shenqing\n");		
 		if (!(new_item=cJSON_New_Item()))	
 		{
-			printf("file:%s\nfuncName:%s\nLine:%d\n",__FILE__, __FUNCTION__,__LINE__);			
+			//printf("file:%s\nfuncName:%s\nLine:%d\n",__FILE__, __FUNCTION__,__LINE__);			
 			printf("memory fail\n");
 			return 0;       /* memory fail */
 		}

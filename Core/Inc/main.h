@@ -61,8 +61,16 @@ void Error_Handler(void);
 #define Bsp_Led_GPIO_Port GPIOC
 #define Body_PA1_Pin GPIO_PIN_1
 #define Body_PA1_GPIO_Port GPIOA
+#define Fire_Pin GPIO_PIN_4
+#define Fire_GPIO_Port GPIOA
 #define DHT11_PA11_Pin GPIO_PIN_11
 #define DHT11_PA11_GPIO_Port GPIOA
+#define w25q64_cs_Pin GPIO_PIN_12
+#define w25q64_cs_GPIO_Port GPIOA
+#define SCL_PB6_Pin GPIO_PIN_6
+#define SCL_PB6_GPIO_Port GPIOB
+#define SDA_PB7_Pin GPIO_PIN_7
+#define SDA_PB7_GPIO_Port GPIOB
 #define SCL_PB8_Pin GPIO_PIN_8
 #define SCL_PB8_GPIO_Port GPIOB
 #define SDA_PB9_Pin GPIO_PIN_9

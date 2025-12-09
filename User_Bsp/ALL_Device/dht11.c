@@ -180,8 +180,8 @@ uint8_t Read_dht11_Data(uint8_t *humi, uint8_t *temp)
     /* 校验数据 */
     if (SUM == (Rh_byte1 + Rh_byte2 + Temp_byte1 + Temp_byte2))
     {
-        *temp = Temp_byte1;
-        *humi = Rh_byte1;
+        *temp = Rh_byte1;
+        *humi = Temp_byte1;
         return 1;
     }
     else
@@ -200,9 +200,5 @@ void DHT11Senser_Read(uint8_t *humi, uint8_t *temp)
     /* 恢复调度器 */
     xTaskResumeAll();
 
-    if (err == 0)
-    {
-        *temp = 0;
-        *humi = 0;
-    }
+
 }

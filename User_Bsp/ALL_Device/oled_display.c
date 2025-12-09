@@ -25,7 +25,7 @@ void TimeDisplay(void)
         count++;
     }
 
-    ReadTime(TimeArr);
+    ReadTime(&TimeArr);
     /* 显示时间数字 */
     OLED_ShowNum(POSITION_HOUR_X, POSITION_HOUR_Y, TimeArr[0], POSITION_TIME_LEN, OLED_8X16);
     OLED_ShowNum(POSITION_MIN_X, POSITION_MIN_Y, TimeArr[1], POSITION_TIME_LEN, OLED_8X16);
@@ -41,10 +41,28 @@ void TimeDisplay(void)
  * @Date: 2024-10-24 10:52:08
  * @Author: Jchen
  */
-void Data_Show(uint8_t *temp, uint8_t *humi)
-{
-    OLED_ShowString(TEMP_HUMI_LOGO_POSITION_X, TEMP_HUMI_LOGO_POSITION_Y, " T:00C   H:000% ", OLED_8X16);
+//void Data_Show(uint8_t *temp, uint8_t *humi)
+//{
+//    // 清除原来的显示
+//    OLED_ShowString(TEMP_HUMI_LOGO_POSITION_X, TEMP_HUMI_LOGO_POSITION_Y, "                ", OLED_8X16);
 
-    OLED_ShowNum(TEMP_NUM_POSITION_X, TEMP_NUM_POSITION_Y, *humi, TEMP_NUM_LEN, OLED_8X16);
-    OLED_ShowNum(HUMI_NUM_POSITION_X, HUMI_NUM_POSITION_Y, *temp, HUMI_NUM_LEN, OLED_8X16);
+//    // 显示中文字符
+//    OLED_ShowChinese(TEMP_HUMI_LOGO_POSITION_X + 0, TEMP_HUMI_LOGO_POSITION_Y, "纪凯");
+//    OLED_ShowString(TEMP_HUMI_LOGO_POSITION_X + 32, TEMP_HUMI_LOGO_POSITION_Y, ":00C  ", OLED_8X16);
+
+//    OLED_ShowChinese(TEMP_HUMI_LOGO_POSITION_X + 64, TEMP_HUMI_LOGO_POSITION_Y, "明杰");
+//    OLED_ShowString(TEMP_HUMI_LOGO_POSITION_X + 96, TEMP_HUMI_LOGO_POSITION_Y, ":00%  ", OLED_8X16);
+
+//    // 显示数字，调整位置以匹配中文字符后的显示位置
+//    OLED_ShowNum(TEMP_HUMI_LOGO_POSITION_X + 40, TEMP_HUMI_LOGO_POSITION_Y, *humi, TEMP_NUM_LEN, OLED_8X16);
+//    OLED_ShowNum(TEMP_HUMI_LOGO_POSITION_X + 104, TEMP_HUMI_LOGO_POSITION_Y, *temp, HUMI_NUM_LEN, OLED_8X16);
+//}
+ void Data_Show( uint8_t *temp, uint8_t *humi )
+{
+    OLED_ShowString( TEMP_HUMI_LOGO_POSITION_X, TEMP_HUMI_LOGO_POSITION_Y, " T:00C   H:000% ", OLED_8X16 );
+    
+    OLED_ShowNum( TEMP_NUM_POSITION_X, TEMP_NUM_POSITION_Y, *humi, TEMP_NUM_LEN, OLED_8X16 );
+    OLED_ShowNum( HUMI_NUM_POSITION_X, HUMI_NUM_POSITION_Y, *temp, HUMI_NUM_LEN, OLED_8X16 );
+	
+    
 }

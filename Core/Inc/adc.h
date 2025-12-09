@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
  ******************************************************************************
- * @file    usart.h
+ * @file    adc.h
  * @brief   This file contains all the function prototypes for
- *          the usart.c file
+ *          the adc.c file
  ******************************************************************************
  * @attention
  *
@@ -18,8 +18,8 @@
  */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __USART_H__
-#define __USART_H__
+#ifndef __ADC_H__
+#define __ADC_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,29 +29,23 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#define USART_DEBUG &huart1 // 调试串口,默认使用USART1
-#define BUF_SIZE 256
-  extern uint8_t Uart1RxBuffer[256]; // 定义接收缓冲区，根据实际需求调整大小
+
 /* USER CODE END Includes */
 
-extern UART_HandleTypeDef huart1;
+extern ADC_HandleTypeDef hadc1;
 
-extern UART_HandleTypeDef huart2;
+extern ADC_HandleTypeDef hadc2;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void MX_USART1_UART_Init(void);
-void MX_USART2_UART_Init(void);
+void MX_ADC1_Init(void);
+void MX_ADC2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
-  void Uart_printf(UART_HandleTypeDef *huart, char *format, ...);
+    float MQ2_GetPPM();
+    float CO_MQ7_GetPPM();
 
 /* USER CODE END Prototypes */
 
@@ -59,5 +53,5 @@ void MX_USART2_UART_Init(void);
 }
 #endif
 
-#endif /* __USART_H__ */
+#endif /* __ADC_H__ */
 

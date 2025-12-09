@@ -2,7 +2,11 @@
 *.d
 *.ioc
 *.txt
+*.axf
 
+# MDK-ARM specific files
+*.uvprojx
+*.uvoptx
 
 # Object files
 *.o
@@ -18,13 +22,15 @@
 # Precompiled Headers
 *.gch
 *.pch
-
+*.ioc
 # Libraries
 *.lib
 *.a
 *.la
 *.lo
-
+*.uvoptx
+*.json
+*.lock
 # Shared objects (inc. Windows DLLs)
 *.dll
 *.so
@@ -39,12 +45,15 @@
 *.x86_64
 *.hex
 *.s
-
+*.hex
 # Debug files
 *.dSYM/
 *.su
 *.idb
 *.pdb
+*.log
+*.dis
+*.uvprojx
 
 # Kernel Module Compile Results
 *.mod*
@@ -58,7 +67,8 @@ dkms.conf
 #GCC & vscode
 /.vscode
 /build
-
+/Middlewares
+/Drivers
 
 
 # Keil Clean
@@ -85,15 +95,11 @@ RTE/
 Templates/
 Examples/
  
-!*.uvprojx
-!*.h
-!*.c
-!*.ioc
-!*.axf
-!*.bin
-!*.hex
 
 #JLINK file
 JLinkLog.txt
 *.dbgconf
+
+
+
 

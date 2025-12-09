@@ -8,7 +8,7 @@
  * 输出参数： 无
  * 返 回 值： 无
  ***********************************************************************/
-void udelay(int us)
+void udelay(uint32_t us)
 {
 #if 0  
     uint32_t ticks;
@@ -38,14 +38,14 @@ void udelay(int us)
         }
     }
 #else
-    extern TIM_HandleTypeDef        htim4;
+    extern TIM_HandleTypeDef htim4;
     TIM_HandleTypeDef *hHalTim = &htim4;
 
     uint32_t ticks;
     uint32_t told, tnow, tcnt = 0;
     uint32_t reload = __HAL_TIM_GET_AUTORELOAD(hHalTim);
 
-    ticks = us * reload / (1000);  /* 假设reload对应1ms */
+    ticks = us * reload / (1000); /* 假设reload对应1ms */
     told = __HAL_TIM_GET_COUNTER(hHalTim);
     while (1)
     {
@@ -70,7 +70,6 @@ void udelay(int us)
 #endif
 }
 
-
 /**********************************************************************
  * 函数名称： mdelay
  * 功能描述： ms级别的延时函数
@@ -78,9 +77,9 @@ void udelay(int us)
  * 输出参数： 无
  * 返 回 值： 无
  ***********************************************************************/
-void mdelay(int ms)
+void mdelay(uint32_t ms)
 {
-    for (int i = 0; i < ms; i++)
+    for (uint32_t i = 0; i < ms; i++)
         udelay(1000);
 }
 
@@ -93,10 +92,10 @@ void mdelay(int ms)
  ***********************************************************************/
 uint64_t system_get_ns(void)
 {
-    //extern uint32_t HAL_GetTick(void);
-    extern TIM_HandleTypeDef        htim4;
+    // extern uint32_t HAL_GetTick(void);
+    extern TIM_HandleTypeDef htim4;
     TIM_HandleTypeDef *hHalTim = &htim4;
-    
+
     uint64_t ns = HAL_GetTick();
     uint64_t cnt;
     uint64_t reload;
@@ -108,5 +107,3 @@ uint64_t system_get_ns(void)
     ns += cnt * 1000000 / reload;
     return ns;
 }
-
-
