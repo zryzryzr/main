@@ -43,6 +43,7 @@ TaskHandle_t xSendMsgHandle_t;
 TaskHandle_t xRecvMsgHandle_t;
 TaskHandle_t xSensorTaskHandle;
 TaskHandle_t xKeyGetHandle_t;
+TimerHandle_t xTimerHandle_Key;
 
 void check_memory()
 {
@@ -192,6 +193,12 @@ void Sensor_Task(void *pvParameters)
 void Key_Get_Task(void *pvParameters)
 {
     (void)pvParameters;
+
+    for (;;)
+    {
+        ButtonHandler();
+        vTaskDelay(100);
+    }
 }
 void My_Task_Init(void)
 {
@@ -216,6 +223,12 @@ void My_Task_Init(void)
     xTaskCreate(Key_Get_Task, "Key_Get_Task", 256, NULL, 10, &xKeyGetHandle_t);
     if (xKeyGetHandle_t == NULL)
         printf("Key_Get_Task create failed\r\n");
+
+    // 创建一个软件定时器
+    // xTimerHandle_Key = xTimerCreate("KeyTimer", pdMS_TO_TICKS(1), pdTRUE, (void *)0, Key_TimerCallback);
+    // if (xTimerHandle_Key == NULL)
+    //     printf("KeyTimer create failed\r\n");
+    // xTimerStart(xTimerHandle_Key, portMAX_DELAY);
 }
 
 void My_Drivers_Init(void)
