@@ -19,6 +19,7 @@
 #include "m24c02.h"
 #include "queue.h"  //队列
 #include "timers.h" //软件定时器
+#include "FreeRTOSConfig.h"
 #define ESP8266_ONENET_INFO "AT+CIPSTART=\"TCP\",\"mqtts.heclouds.com\",1883\r\n"
 
 static uint8_t Body_val;
