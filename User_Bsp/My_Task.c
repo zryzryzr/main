@@ -58,7 +58,7 @@ static void Name_Show()
     OLED_ShowChinese(0, 48, "宇");
     OLED_ShowChinese(115, 48, "郭");
 }
-
+static char task_info_buf[256]; // 使用静态数组
 void My_Led_Task(void *pvParameters)
 {
     (void)pvParameters;
@@ -70,31 +70,29 @@ void My_Led_Task(void *pvParameters)
     TaskStatus_t *task_info = NULL;
     eTaskState task_state = eInvalid;
     char *task_state_str = NULL;
-    char *task_info_buf = NULL;
     /* 函数vTaskList()的使用*/
     printf("/*************第四步：函数vTaskList()的使用************/\r\n");
-    task_info_buf = pvPortMalloc(256);
-    if (task_info_buf == NULL)
-    {
-        /* code */
-        printf("内存分配失败\r\n");
-    }
-
-    vTaskList(task_info_buf); /* 获取所有任务的信息 */
-    printf("任务名\t\t状态\t优先级\t剩余栈\t任务序号\r\n");
-    printf("%s\r\n", task_info_buf);
-    vPortFree(task_info_buf);
-    printf("/********************实验结束**********************/\r\n");
-
+    // task_info_buf = pvPortMalloc(256);
+    //    if (task_info_buf == NULL)
+    //    {
+    //        /* code */
+    //        printf("内存分配失败\r\n");
+    //    }
     while (1)
     {
 
+        vTaskList(task_info_buf); /* 获取所有任务的信息 */
+        printf("任务名\t\t状态\t优先级\t剩余栈\t任务序号\r\n");
+        printf("%s\r\n", task_info_buf);
+        // vPortFree(task_info_buf);
+        printf("/********************实验结束**********************/\r\n");
+
         check_memory();
-        Bsp_LedToggle();
-        // printf("led亮\r\n");
-        //  PassiveBuzzer_Test();
-        Beep_OnOff(0);
-        vTaskDelay(2000);
+        // Bsp_LedToggle();
+        //  printf("led亮\r\n");
+        //   PassiveBuzzer_Test();
+        //  Beep_OnOff(0);
+        vTaskDelay(3000);
     }
 }
 
@@ -142,6 +140,8 @@ void EspLink_Task(void *pvParameters)
     OneNET_Subscribe(); // 订阅主题
     Uart_printf(USART_DEBUG, "---------------------------Subscribe，Successful\r\n");
     vTaskSuspend(NULL); // 挂起本任务
+    // vTaskDelete(NULL);
+    vTaskDelay(portMAX_DELAY);
 }
 void Net_SendMsg_T(void *pvParameters)
 {
@@ -196,31 +196,34 @@ void Key_Get_Task(void *pvParameters)
 
     for (;;)
     {
+        // 为了原子性操作，不被其他任务干扰
+        taskENTER_CRITICAL();
         ButtonHandler();
+        taskEXIT_CRITICAL();
         vTaskDelay(100);
     }
 }
 void My_Task_Init(void)
 {
-    xTaskCreate(EspLink_Task, "EspLink_Task", 750, NULL, 15, &xEspLinkTaskHandle);
+    xTaskCreate(EspLink_Task, "EspLink_Task", 256, NULL, 20, &xEspLinkTaskHandle);
     if (xEspLinkTaskHandle == NULL)
         printf("EspLink_Task create failed\r\n");
-    xTaskCreate(My_Led_Task, "My_Led_Task", 128, NULL, 10, &xLedTaskHandle);
+    xTaskCreate(My_Led_Task, "My_Led_Task", 256, NULL, 10, &xLedTaskHandle);
     if (xLedTaskHandle == NULL)
         printf("My_Led_Task create failed\r\n");
     xTaskCreate(Home_Task, "My_Home_Task", 256, NULL, 10, &xHomeTaskHandle);
     if (xHomeTaskHandle == NULL)
         printf("Home_Task create failed\r\n");
-    xTaskCreate(Net_SendMsg_T, "SendMsg_Task", 512, NULL, 11, &xSendMsgHandle_t);
+    xTaskCreate(Net_SendMsg_T, "SendMsg_Task", 256, NULL, 11, &xSendMsgHandle_t);
     if (xSendMsgHandle_t == NULL)
         printf("SendMsg_Task create failed\r\n");
-    xTaskCreate(Net_RecvMsg_T, "RecvMsg_Task", 512, NULL, 11, &xRecvMsgHandle_t);
+    xTaskCreate(Net_RecvMsg_T, "RecvMsg_Task", 256, NULL, 11, &xRecvMsgHandle_t);
     if (xRecvMsgHandle_t == NULL)
         printf("RecvMsg_Task create failed\r\n");
-    xTaskCreate(Sensor_Task, "Sensor_Task", 256, NULL, 10, &xSensorTaskHandle);
+    // xTaskCreate(Sensor_Task, "Sensor_Task", 256, NULL, 10, &xSensorTaskHandle);
     if (xSensorTaskHandle == NULL)
         printf("Sensor_Task create failed\r\n");
-    xTaskCreate(Key_Get_Task, "Key_Get_Task", 256, NULL, 10, &xKeyGetHandle_t);
+    xTaskCreate(Key_Get_Task, "Key_Get_Task", 128, NULL, 12, &xKeyGetHandle_t);
     if (xKeyGetHandle_t == NULL)
         printf("Key_Get_Task create failed\r\n");
 
