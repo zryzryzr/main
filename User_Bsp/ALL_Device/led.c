@@ -1,5 +1,7 @@
 #include "led.h"
 #include "main.h"
+#include "led_manager.h"
+
 bool led_status = false;
 bool fire_status = false;
 bool body_status = false;
@@ -11,6 +13,58 @@ void Led_Set(_Bool status)
     else
         Bsp_LedOFF();
 }
+
+void Hardware_Led_Control(uint8_t channel, bool onOff)
+{
+    switch (channel)
+    {
+    case 0:
+        // 控制Bsp_Led LED
+        if (onOff)
+        {
+            Bsp_LedON(); // 打开LED
+        }
+        else
+        {
+            Bsp_LedOFF(); // 关闭LED
+        }
+        break;
+
+    case 2:
+        // 可以添加更多LED通道的控制
+        // 例如：
+        // HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, onOff ? GPIO_PIN_RESET : GPIO_PIN_SET);
+        break;
+    default:
+        break;
+    }
+}
+
+// 初始化LED管理器示例
+void LED_Manager_Init(void)
+{
+    // 初始化LED管理器，设置有2个LED通道，并传递硬件控制函数
+    LedManager_Init(1, Hardware_Led_Control);
+}
+
+// 使用LED管理器控制LED示例
+void LED_Manager_Usage(void)
+{
+    // 1. 打开LED0
+    // LedManager_SetLed_OnOff(0, true);
+    // HAL_Delay(2000);
+
+    //  2. 关闭LED0
+    // LedManager_SetLed_OnOff(0, false);
+    // HAL_Delay(2000);
+
+    // 3. 设置LED0闪烁：100ms为基础单位，亮3个单位(300ms)，灭5个单位(500ms)
+    // LedManager_SetLed_Blink(0, 100, 3, 5);
+
+    // 4. 如果需要使用脉冲功能，需要在led_manager.h中添加声明
+    LedManager_SetLed_PulseS(0, 10, 5, 12); // 1秒脉冲
+}
+
 void Get_Fire_State(void)
 {
     fire_status = (HAL_GPIO_ReadPin(Fire_GPIO_Port, Fire_Pin) == GPIO_PIN_RESET) ? 1 : 0;

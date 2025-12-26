@@ -88,10 +88,11 @@ void My_Led_Task(void *pvParameters)
         printf("/********************实验结束**********************/\r\n");
 
         check_memory();
-        // Bsp_LedToggle();
-        //  printf("led亮\r\n");
-        //   PassiveBuzzer_Test();
-        //  Beep_OnOff(0);
+        //         Bsp_LedToggle();
+        //			        vTaskDelay(1000);
+        //        //  printf("led亮\r\n");
+        //        //   PassiveBuzzer_Test();
+        //         Beep_OnOff(0);
         vTaskDelay(3000);
     }
 }
@@ -247,6 +248,10 @@ void My_Drivers_Init(void)
     OLED_Clear();
     HAL_ADC_Start(&hadc1);
     HAL_ADC_Start(&hadc2);
+
+    LED_Manager_Init();
+    LED_Manager_Usage();
+
     My_Task_Init();
-    // 测试git
+    //  测试git
 }
