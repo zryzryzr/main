@@ -51,7 +51,7 @@
 osThreadId_t All_TaskInitHandle;
 const osThreadAttr_t All_TaskInit_attributes = {
     .name = "All_TaskInit",
-    .stack_size = 256 * 4,
+    .stack_size = 128 * 4,
     .priority = (osPriority_t)osPriorityNormal,
 };
 

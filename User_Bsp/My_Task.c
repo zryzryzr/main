@@ -20,6 +20,7 @@
 #include "queue.h"  //队列
 #include "timers.h" //软件定时器
 #include "FreeRTOSConfig.h"
+#include "TaskStackTracker.h"
 #define ESP8266_ONENET_INFO "AT+CIPSTART=\"TCP\",\"mqtts.heclouds.com\",1883\r\n"
 
 static uint8_t Body_val;
@@ -116,15 +117,18 @@ void Home_Task(void *pvParameters)
         vTaskDelay(500);
     }
 }
-
+static uint8_t k = 0;
 void EspLink_Task(void *pvParameters)
 {
     (void)pvParameters;
+
     // M24C02_Test();
     // PassiveBuzzer_Test();
     /** */
     printf("tasktask\r\n");
-    uint8_t k = 0;
+    /*联网灯光*/
+    LedManager_SetLed_PulseS(0, 10, 5, 10);
+
     ESP8266_Init(); // 初始化ESP8266
     HAL_Delay(100);
     Uart_printf(USART_DEBUG, "Connect MQTTs Server...\r\n");
@@ -139,6 +143,8 @@ void EspLink_Task(void *pvParameters)
     }
     OneNET_Subscribe(); // 订阅主题
     Uart_printf(USART_DEBUG, "---------------------------Subscribe，Successful\r\n");
+
+    LedManager_SetLed_OnOff(0, false);
     vTaskSuspend(NULL); // 挂起本任务
     // vTaskDelete(NULL);
     vTaskDelay(portMAX_DELAY);
@@ -197,9 +203,9 @@ void Key_Get_Task(void *pvParameters)
     for (;;)
     {
         // 为了原子性操作，不被其他任务干扰
-        taskENTER_CRITICAL();
+        // taskENTER_CRITICAL();
         ButtonHandler();
-        taskEXIT_CRITICAL();
+        // taskEXIT_CRITICAL();
         vTaskDelay(100);
     }
 }
@@ -208,7 +214,7 @@ void My_Task_Init(void)
     xTaskCreate(EspLink_Task, "EspLink_Task", 256, NULL, 20, &xEspLinkTaskHandle);
     if (xEspLinkTaskHandle == NULL)
         printf("EspLink_Task create failed\r\n");
-    xTaskCreate(My_Led_Task, "My_Led_Task", 256, NULL, 10, &xLedTaskHandle);
+    // xTaskCreate(My_Led_Task, "My_Led_Task", 256, NULL, 10, &xLedTaskHandle);
     if (xLedTaskHandle == NULL)
         printf("My_Led_Task create failed\r\n");
     xTaskCreate(Home_Task, "My_Home_Task", 256, NULL, 10, &xHomeTaskHandle);
@@ -236,6 +242,10 @@ void My_Task_Init(void)
 
 void My_Drivers_Init(void)
 {
+
+    LED_Manager_Init();
+    LED_Manager_Usage();
+
     HAL_TIM_Base_Start_IT(&htim2);
     //  HAL_TIM_Base_Start(&htim1);
     HAL_UART_Receive_IT(&huart2, &chuan, 1);
@@ -247,6 +257,8 @@ void My_Drivers_Init(void)
     OLED_Clear();
     HAL_ADC_Start(&hadc1);
     HAL_ADC_Start(&hadc2);
+
     My_Task_Init();
-    // 测试git
+    Task_Tracker_Init(5000);
+    //  测试git
 }

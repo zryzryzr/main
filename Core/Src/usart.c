@@ -246,7 +246,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
 /* USER CODE BEGIN 1 */
 uint8_t Uart1RxBuffer[256]; // 定义接收缓冲区，根据实际需求调整大小
-extern unsigned char esp8266_buf1_2[256],esp8266_buf3[256];
+extern unsigned char esp8266_buf1_2[256], esp8266_buf3[256];
 extern unsigned short esp8266_cnt, esp8266_cntPre;
 extern unsigned short esp8266_cnt2, esp8266_cntPre2;
 
@@ -264,11 +264,13 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
   if (huart->Instance == USART1)
   {
-    uint8_t cnt = BUF_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart1_rx); // 获取接收缓冲区中已经接收到的数据个数
-    HAL_UART_Transmit(&huart1, Uart1RxBuffer, cnt, 1000);            // 将接收到的数据再发回到上位机
-			memset(Uart1RxBuffer, 0, cnt); // 或者是100
-    // 下面这句话在IRQ里面打开了，放到这里会有bug115200,9600不能切换
-     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, Uart1RxBuffer, BUF_SIZE); 
+    /* 获取接收缓冲区中已经接收到的数据个数*/
+    uint8_t cnt = BUF_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart1_rx);
+    /*// 将接收到的数据再发回到上位机*/
+    HAL_UART_Transmit(&huart1, Uart1RxBuffer, cnt, 1000);
+    memset(Uart1RxBuffer, 0, cnt); // 或者是100
+
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, Uart1RxBuffer, BUF_SIZE);
   }
 }
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
@@ -282,16 +284,18 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
   }
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	   if(huart->Instance == USART2)      
-		{
-			if(esp8266_cnt >= 250)	esp8266_cnt = 0; //防止串口被刷爆
-			if(esp8266_cnt2 >= 250)	esp8266_cnt2 = 0; //防止串口被刷爆			
-			esp8266_buf1_2[esp8266_cnt++] = chuan;
-			esp8266_buf3[esp8266_cnt2++] = chuan;		
-			HAL_UART_Receive_IT(&huart2, &chuan, 1);
-		}
+  if (huart->Instance == USART2)
+  {
+    if (esp8266_cnt >= 250)
+      esp8266_cnt = 0; // 防止串口被刷爆
+    if (esp8266_cnt2 >= 250)
+      esp8266_cnt2 = 0; // 防止串口被刷爆
+    esp8266_buf1_2[esp8266_cnt++] = chuan;
+    esp8266_buf3[esp8266_cnt2++] = chuan;
+    HAL_UART_Receive_IT(&huart2, &chuan, 1);
+  }
 }
 
 /* USER CODE END 1 */
