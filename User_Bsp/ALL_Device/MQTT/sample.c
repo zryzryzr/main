@@ -339,18 +339,17 @@ _Bool OneNet_UnSubscribe(const char *topics[], unsigned char topic_cnt)
 //
 //	说明：
 //==========================================================
+static MQTT_PACKET_STRUCTURE mqttPacket = {NULL, 0, 0, 0};
+
+static char *req_payload = NULL;
+static char *cmdid_topic = NULL;
+static unsigned char type = 0;
+static unsigned char qos = 0;
+static unsigned short pkt_id = 0;
+
+static short result = -1;
 void OneNet_RevPro(unsigned char *cmd)
 {
-
-	MQTT_PACKET_STRUCTURE mqttPacket = {NULL, 0, 0, 0};
-
-	char *req_payload = NULL;
-	char *cmdid_topic = NULL;
-	unsigned char type = 0;
-	unsigned char qos = 0;
-	static unsigned short pkt_id = 0;
-
-	short result = -1;
 
 	//---------------------------------------------步骤一：获取返回数据类型---------------------------------------------
 	type = MQTT_UnPacketRecv(cmd);

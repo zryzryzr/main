@@ -331,12 +331,11 @@ unsigned char OneNet_FillBuf(char *buf)
 //
 //	说明：
 //==========================================================
+static char buf[512];
 void OneNet_SendData(void)
 {
 
 	MQTT_PACKET_STRUCTURE mqttPacket = {NULL, 0, 0, 0}; // 协议包
-
-	char buf[512];
 
 	short body_len = 0, i = 0;
 
