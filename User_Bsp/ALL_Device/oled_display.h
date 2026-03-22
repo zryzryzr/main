@@ -32,5 +32,6 @@
 
 void TimeDisplay(void);
 void Data_Show(uint8_t *temp, uint8_t *humi, float *smoke, float *co);
+void OLED_Display_Switch(uint8_t mode, uint8_t *temp, uint8_t *humi, float *smoke, float *co);
 void ESP_link_imag();
 #endif

@@ -2,6 +2,12 @@
 #include "OLED.h"
 #include "OLED_Data.h"
 #include "stm32f1xx_hal.h"
+#include "rtc.h"
+#include <stdio.h>
+#include <string.h>
+
+extern uint8_t OLED_DisplayBuf[8][128];
+// OLED_Buf_Backup removed to save RAM
 
 /**
  * @description: 时间显示
@@ -33,31 +39,26 @@ void TimeDisplay(void)
     OLED_ShowNum(POSITION_SEC_X, POSITION_SEC_Y, TimeArr[2], POSITION_TIME_LEN, OLED_8X16);
 }
 
-/**
- * @description: 显示温湿度、光照度数据
- * @param {uint8_t} *temp
- * @param {uint8_t} *humi
- * @param {uint8_t} *LightIntensity
- * @return {*}
- * @Date: 2024-10-24 10:52:08
- * @Author: Jchen
- */
-// void Data_Show(uint8_t *temp, uint8_t *humi)
-//{
-//     // 清除原来的显示
-//     OLED_ShowString(TEMP_HUMI_LOGO_POSITION_X, TEMP_HUMI_LOGO_POSITION_Y, "                ", OLED_8X16);
+static char date_str[20];
+static char time_str[20];
+void View_Time(void)
+{
+    MyRTC_ReadTime();
 
-//    // 显示中文字符
-//    OLED_ShowChinese(TEMP_HUMI_LOGO_POSITION_X + 0, TEMP_HUMI_LOGO_POSITION_Y, "纪凯");
-//    OLED_ShowString(TEMP_HUMI_LOGO_POSITION_X + 32, TEMP_HUMI_LOGO_POSITION_Y, ":00C  ", OLED_8X16);
+    // 显示 "当前日期" (Centered: 32px)
+    OLED_ShowChinese(32, 0, "当前日期");
 
-//    OLED_ShowChinese(TEMP_HUMI_LOGO_POSITION_X + 64, TEMP_HUMI_LOGO_POSITION_Y, "明杰");
-//    OLED_ShowString(TEMP_HUMI_LOGO_POSITION_X + 96, TEMP_HUMI_LOGO_POSITION_Y, ":00%  ", OLED_8X16);
+    // 显示日期 YYYY-MM-DD (Centered: 24px)
+    sprintf(date_str, "%04d-%02d-%02d", MyRTC_Time[0], MyRTC_Time[1], MyRTC_Time[2]);
+    OLED_ShowString(24, 16, date_str, OLED_8X16);
 
-//    // 显示数字，调整位置以匹配中文字符后的显示位置
-//    OLED_ShowNum(TEMP_HUMI_LOGO_POSITION_X + 40, TEMP_HUMI_LOGO_POSITION_Y, *humi, TEMP_NUM_LEN, OLED_8X16);
-//    OLED_ShowNum(TEMP_HUMI_LOGO_POSITION_X + 104, TEMP_HUMI_LOGO_POSITION_Y, *temp, HUMI_NUM_LEN, OLED_8X16);
-//}
+    // 显示 "当前时间" (Centered: 32px)
+    OLED_ShowChinese(32, 32, "当前时间");
+
+    // 显示时间 HH:MM:SS (Centered: 32px)
+    sprintf(time_str, "%02d:%02d:%02d", MyRTC_Time[3], MyRTC_Time[4], MyRTC_Time[5]);
+    OLED_ShowString(32, 48, time_str, OLED_8X16);
+}
 
 #define OPTION_TITLE_POSITION_X 30
 #define OPTION_TITLE_POSITION_Y 2
@@ -73,35 +74,78 @@ void ESP_link_imag()
     OLED_ShowImage(OPTION_ICON_POSITION_X, OPTION_ICON_POSITION_Y, 48, 48, gImage_new);
 }
 
+static char buf_Data[20];
 void Data_Show(uint8_t *temp, uint8_t *humi, float *smoke, float *co)
 {
-    // Row 1: Temperature and Humidity
     OLED_ShowChinese(0, 0, "温度");
     OLED_ShowChar(32, 0, ':', OLED_8X16);
-    OLED_ShowNum(40, 0, *humi, 2, OLED_8X16);
+    OLED_ShowNum(40, 0, *temp, 2, OLED_8X16);
     OLED_ShowChar(56, 0, 'C', OLED_8X16);
 
     OLED_ShowChinese(64, 0, "湿度");
     OLED_ShowChar(96, 0, ':', OLED_8X16);
-    OLED_ShowNum(104, 0, *temp, 2, OLED_8X16);
+    OLED_ShowNum(104, 0, *humi, 2, OLED_8X16);
     OLED_ShowChar(120, 0, '%', OLED_8X16);
 
-    // Row 2: Smoke (MQ2)
     OLED_ShowChinese(0, 16, "烟雾");
     OLED_ShowChar(32, 16, ':', OLED_8X16);
-    // Display float: 3 Int + 1 Dot + 1 Frac = 5 chars
-    OLED_ShowFloatNum(40, 16, *smoke, 3, 1, OLED_8X16);
-    OLED_ShowString(80, 16, "ppm", OLED_8X16);
+    sprintf(buf_Data, "%.2f%%", *smoke);
+    OLED_ShowString(40, 16, buf_Data, OLED_8X16);
 
-    // Row 3: CO (MQ7)
     OLED_ShowString(0, 32, "CO", OLED_8X16);
     OLED_ShowChar(16, 32, ':', OLED_8X16);
-    // Display float
-    OLED_ShowFloatNum(24, 32, *co, 3, 1, OLED_8X16);
-    OLED_ShowString(64, 32, "ppm", OLED_8X16);
 
-    // Row 4: Clear previous content
+    sprintf(buf_Data, "%.1fppm  ", *co);
+    OLED_ShowString(24, 32, buf_Data, OLED_8X16);
     OLED_ShowString(0, 48, "                ", OLED_8X16);
 }
 
+static void OLED_LowRAM_Transition(uint8_t mode, uint8_t *temp, uint8_t *humi, float *smoke, float *co)
+{
+    for (uint8_t i = 0; i < 8; i++)
+    {
+        memset(OLED_DisplayBuf[i], 0, 128);
+        OLED_UpdateArea(0, i * 8, 128, 8);
+        vTaskDelay(20);
+    }
 
+    OLED_Clear();
+
+    if (mode == 0) // 显示数据模式
+    {
+        Data_Show(temp, humi, smoke, co);
+    }
+    else // 显示时间模式
+    {
+        View_Time();
+    }
+
+    for (uint8_t i = 0; i < 8; i++)
+    {
+        OLED_UpdateArea(0, i * 8, 128, 8);
+        vTaskDelay(20);
+    }
+}
+
+void OLED_Display_Switch(uint8_t mode, uint8_t *temp, uint8_t *humi, float *smoke, float *co)
+{
+    static uint8_t last_mode = 255;
+
+    if (mode != last_mode)
+    {
+        OLED_LowRAM_Transition(mode, temp, humi, smoke, co);
+        last_mode = mode;
+    }
+    else
+    {
+        if (mode == 0)
+        {
+            Data_Show(temp, humi, smoke, co);
+        }
+        else
+        {
+            View_Time();
+        }
+        OLED_Update();
+    }
+}
