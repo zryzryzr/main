@@ -148,3 +148,38 @@ void PassiveBuzzer_Test(void)
         mdelay(1000);
     }
 }
+
+static bool fire_alarm_enabled = false;
+static uint32_t fire_alarm_tick = 0;
+
+void Fire_Alarm_Set(bool enable)
+{
+    fire_alarm_enabled = enable;
+    if (!enable)
+    {
+        HAL_TIM_PWM_Stop(g_HPWM_PassiveBuzzer, TIM_CHANNEL_1);
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+        fire_alarm_tick = 0;
+    }
+}
+
+void Fire_Alarm_Process(void)
+{
+    if (!fire_alarm_enabled)
+        return;
+
+    fire_alarm_tick++;
+
+    uint32_t cycle = fire_alarm_tick % 100;
+
+    if (cycle < 50)
+    {
+        uint16_t freq = 800 + (cycle * 8);
+        PassiveBuzzer_Set_Freq_Duty(freq, 50);
+    }
+    else
+    {
+        uint16_t freq = 1200 - ((cycle - 50) * 8);
+        PassiveBuzzer_Set_Freq_Duty(freq, 50);
+    }
+}

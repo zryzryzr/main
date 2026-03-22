@@ -1,5 +1,6 @@
 #ifndef _BUZZER_H
 #define _BUZZER_H
+#include "stdbool.h"
 
 /**********************************************************************
  * 函数名称： PassiveBuzzer_Init
@@ -37,6 +38,9 @@ void PassiveBuzzer_Set_Freq_Duty(int freq, int duty);
  * 返 回 值： 无
  ***********************************************************************/
 void PassiveBuzzer_Test(void);
+
+void Fire_Alarm_Set(bool enable);
+void Fire_Alarm_Process(void);
 #include "stdbool.h"
 void Beep_GPIO_Init();
 void Beep_OnOff(bool on);
