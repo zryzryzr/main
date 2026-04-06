@@ -35,6 +35,7 @@ uint8_t humi = 0;
 uint8_t temp = 0;
 
 float ppm = 0;
+uint8_t testttt = 0;
 uint8_t count = 0;
 float adc_mq2 = 0;
 float adc_CO_MQ7 = 0;
