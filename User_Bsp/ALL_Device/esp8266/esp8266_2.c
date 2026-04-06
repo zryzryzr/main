@@ -19,7 +19,7 @@
  **/
 
 // 单片机头文件
-
+#include "stm32f1xx_hal.h"	
 // 网络设备驱动
 #include "esp8266.h"
 
