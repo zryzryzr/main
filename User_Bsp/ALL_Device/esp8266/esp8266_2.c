@@ -33,7 +33,7 @@
 #include "cmsis_os.h"
 
 #define ESP8266_WIFI_INFO "AT+CWJAP=\"iPhone\",\"zhang031007\"\r\n"
-
+/// @brief 
 unsigned char esp8266_buf[512];
 unsigned short esp8266_cnt = 0, esp8266_cntPre = 0;
 
