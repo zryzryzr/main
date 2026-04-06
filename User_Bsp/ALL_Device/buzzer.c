@@ -5,7 +5,7 @@
 #include "tim.h"
 
 extern TIM_HandleTypeDef htim1;
-
+uint8_t ceshiii;
 static TIM_HandleTypeDef *g_HPWM_PassiveBuzzer = &htim1;
 
 bool beep_status = false;
