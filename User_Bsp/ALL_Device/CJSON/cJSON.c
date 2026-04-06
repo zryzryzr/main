@@ -1137,12 +1137,9 @@ cJSON *cJSON_GetArrayItem(cJSON *array, int item)
 cJSON *cJSON_GetObjectItem(cJSON *object, const char *string)
 {
 	cJSON *c = object->child;
-	printf("%08x\n", c);
-	printf("%08x\n", c->string);
 	while (c && cJSON_strcasecmp(c->string, string))
 	{
 		c = c->next;
-		printf("%08x\n", c);
 	}
 	return c;
 }

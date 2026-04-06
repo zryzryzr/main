@@ -37,6 +37,7 @@
 #include "usart.h"
 #include "led.h"
 #include "buzzer.h"
+#include "flash_config.h" // Flash配置模块
 // C库
 #include <string.h>
 #include <stdio.h>
@@ -55,6 +56,8 @@ char key[48];
 extern unsigned char esp8266_buf1_2[256], esp8266_buf3[256];
 extern uint8_t humi;
 extern uint8_t temp;
+extern bool cooking_status;
+extern uint8_t window_angle_status;
 
 /*
 ************************************************************
@@ -306,13 +309,19 @@ unsigned char OneNet_FillBuf(char *buf)
 	strcat(buf, text);
 
 	memset(text, 0, sizeof(text));
-	sprintf(text, "\"LED\":{\"value\":%s},", led_status ? "false" : "true");
+	sprintf(text, "\"LED\":{\"value\":%s},", led_status ? "true" : "false");
 	strcat(buf, text);
 	memset(text, 0, sizeof(text));
 	sprintf(text, "\"Beep\":{\"value\":%s}", beep_status ? "true" : "false");
 	strcat(buf, text);
 	memset(text, 0, sizeof(text));
 	sprintf(text, ",\"Fire\":{\"value\":%s}", fire_status ? "true" : "false");
+	strcat(buf, text);
+	memset(text, 0, sizeof(text));
+	sprintf(text, ",\"Cooking\":{\"value\":%s}", cooking_status ? "true" : "false");
+	strcat(buf, text);
+	memset(text, 0, sizeof(text));
+	sprintf(text, ",\"Window\":{\"value\":%d}", window_angle_status);
 	strcat(buf, text);
 
 	strcat(buf, "}}");
@@ -461,14 +470,114 @@ static char *cmdid_topic = NULL;
 static unsigned short topic_len = 0;
 static unsigned short req_len = 0;
 static unsigned char qos = 0;
-static  unsigned short pkt_id = 0;
+static unsigned short pkt_id = 0;
 static unsigned char type = 0;
 static short result = 0;
+
+static void OneNet_PropertySetReply(cJSON *raw_json, int code, const char *msg)
+{
+	char topic[80];
+	char reply[128];
+	char id_buf[24] = "0";
+	cJSON *id_json = cJSON_GetObjectItem(raw_json, "id");
+
+	if (id_json != NULL)
+	{
+		if (id_json->type == cJSON_String && id_json->valuestring != NULL)
+		{
+			strncpy(id_buf, id_json->valuestring, sizeof(id_buf) - 1);
+			id_buf[sizeof(id_buf) - 1] = '\0';
+		}
+		else if (id_json->type == cJSON_Number)
+		{
+			snprintf(id_buf, sizeof(id_buf), "%d", (int)(id_json->valuedouble + 0.5f));
+		}
+	}
+
+	snprintf(topic, sizeof(topic), "$sys/%s/%s/thing/property/set_reply", PROID, DEVICE_NAME);
+	snprintf(reply, sizeof(reply), "{\"id\":\"%s\",\"code\":%d,\"msg\":\"%s\"}", id_buf, code, msg);
+	OneNET_Publish(topic, reply);
+}
+
+static int OneNet_ParseBool(cJSON *item, bool *out)
+{
+	cJSON *value_json = NULL;
+	if (item == NULL || out == NULL)
+		return 0;
+	if (item->type == cJSON_Object)
+	{
+		value_json = cJSON_GetObjectItem(item, "value");
+		if (value_json != NULL)
+			item = value_json;
+	}
+	if (item->type == cJSON_True)
+	{
+		*out = true;
+		return 1;
+	}
+	if (item->type == cJSON_False)
+	{
+		*out = false;
+		return 1;
+	}
+	if (item->type == cJSON_Number)
+	{
+		*out = (item->valuedouble != 0);
+		return 1;
+	}
+	if (item->type == cJSON_String && item->valuestring != NULL)
+	{
+		if (strcmp(item->valuestring, "true") == 0 || strcmp(item->valuestring, "1") == 0)
+		{
+			*out = true;
+			return 1;
+		}
+		if (strcmp(item->valuestring, "false") == 0 || strcmp(item->valuestring, "0") == 0)
+		{
+			*out = false;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static int OneNet_ParseWindowAngle(cJSON *item, int *angle_out)
+{
+	int angle = -1;
+	if (item == NULL || angle_out == NULL)
+		return 0;
+	if (item->type == cJSON_Number)
+	{
+		angle = (int)(item->valuedouble + 0.5f);
+	}
+	else if (item->type == cJSON_String && item->valuestring != NULL)
+	{
+		angle = atoi(item->valuestring);
+	}
+	else if (item->type == cJSON_Object)
+	{
+		cJSON *value_json = cJSON_GetObjectItem(item, "value");
+		if (value_json != NULL)
+		{
+			if (value_json->type == cJSON_Number)
+				angle = (int)(value_json->valuedouble + 0.5f);
+			else if (value_json->type == cJSON_String && value_json->valuestring != NULL)
+				angle = atoi(value_json->valuestring);
+		}
+	}
+
+	if (angle < 0)
+		return 0;
+	if (angle > 90)
+		angle = 90;
+	*angle_out = angle;
+	return 1;
+}
 
 void OneNet_RevPro(unsigned char *cmd)
 {
 
-	// cJSON *raw_json, *params_json, *led_json, *Beep_json;
+	cJSON *raw_json, *params_json;
 	type = MQTT_UnPacketRecv(cmd);
 	switch (type)
 	{
@@ -478,23 +587,104 @@ void OneNet_RevPro(unsigned char *cmd)
 		{
 			Uart_printf(USART_DEBUG, "----------------------------------------------");
 			Uart_printf(USART_DEBUG, "topic: %s, topic_len: %d, payload: %s, payload_len: %d\r\n", cmdid_topic, topic_len, req_payload, req_len);
-			// raw_json = cJSON_Parse(req_payload);				   // 解析JSON字符串
-			// params_json = cJSON_GetObjectItem(raw_json, "params"); // 提取整个数组
-			// led_json = cJSON_GetObjectItem(params_json, "LED");	   /// 提取对应属性
-			// Beep_json = cJSON_GetObjectItem(params_json, "Beep");  /// 提取对应属性
-			//  if (Beep_json != NULL)
-			//  {
-			//  	if (Beep_json->type == cJSON_True)
-			//  	{
-			//  		Uart_printf(USART_DEBUG, "Beep ON\r\n");
-			//  		Bsp_LedON();
-			//  	}
-			//  	else
-			//  	{
-			//  		Uart_printf(USART_DEBUG, "Beep OFF\r\n");
-			//  		Bsp_LedOFF();
-			//  	}
-			//  }
+
+			raw_json = cJSON_Parse(req_payload); // 解析JSON字符串
+			if (raw_json == NULL)
+			{
+				Uart_printf(USART_DEBUG, "JSON Parse Error!\r\n");
+			}
+			else
+			{
+				// 在 params 中查找所有可能的命令
+				int has_valid_param = 0;
+				int has_invalid_param = 0;
+				bool bool_value = false;
+				int window_angle = 0;
+				params_json = cJSON_GetObjectItem(raw_json, "params");
+				if (params_json != NULL)
+				{
+					// 解析 Cooking
+					cJSON *cooking_json = cJSON_GetObjectItem(params_json, "Cooking");
+					if (cooking_json != NULL)
+					{
+						if (OneNet_ParseBool(cooking_json, &bool_value))
+						{
+							// 使用配置接口更新并保存到Flash
+							Config_UpdateCookingStatus(bool_value);
+							// 同时更新全局变量
+							cooking_status = bool_value;
+							has_valid_param = 1;
+							Uart_printf(USART_DEBUG, "Cooking %s\r\n", cooking_status ? "ON" : "OFF");
+						}
+						else
+							has_invalid_param = 1;
+					}
+
+					// 解析 LED
+					cJSON *led_json = cJSON_GetObjectItem(params_json, "LED");
+					if (led_json != NULL)
+					{
+						extern void Led_Set(_Bool status);
+						if (OneNet_ParseBool(led_json, &bool_value))
+						{
+							Led_Set(bool_value);
+							has_valid_param = 1;
+							Uart_printf(USART_DEBUG, "LED %s\r\n", bool_value ? "ON" : "OFF");
+						}
+						else
+						{
+							has_invalid_param = 1;
+						}
+					}
+
+					// 解析 Beep
+					cJSON *beep_json = cJSON_GetObjectItem(params_json, "Beep");
+					if (beep_json != NULL)
+					{
+						extern void Beep_OnOff(bool on);
+						if (OneNet_ParseBool(beep_json, &bool_value))
+						{
+							Beep_OnOff(bool_value);
+							has_valid_param = 1;
+							Uart_printf(USART_DEBUG, "Beep %s\r\n", bool_value ? "ON" : "OFF");
+						}
+						else
+						{
+							has_invalid_param = 1;
+						}
+					}
+					cJSON *window_json = cJSON_GetObjectItem(params_json, "Window");
+					if (window_json == NULL)
+						window_json = cJSON_GetObjectItem(params_json, "Windows");
+					if (window_json == NULL)
+						window_json = cJSON_GetObjectItem(params_json, "window");
+					if (window_json != NULL)
+					{
+						if (OneNet_ParseWindowAngle(window_json, &window_angle))
+						{
+							Servo_angle((uint8_t)window_angle);
+							has_valid_param = 1;
+							Uart_printf(USART_DEBUG, "Window Angle Set: %d\r\n", window_angle);
+						}
+						else
+						{
+							has_invalid_param = 1;
+							Uart_printf(USART_DEBUG, "Window Parse Error\r\n");
+						}
+					}
+					if (has_valid_param)
+						OneNet_PropertySetReply(raw_json, 200, "success");
+					else if (has_invalid_param)
+						OneNet_PropertySetReply(raw_json, 400, "invalid params");
+					else
+						OneNet_PropertySetReply(raw_json, 400, "empty params");
+				}
+				else
+				{
+					OneNet_PropertySetReply(raw_json, 400, "params missing");
+				}
+				cJSON_Delete(raw_json);
+			}
 		}
 		break;
 	case MQTT_PKT_PUBACK: // 发送Publish消息，平台回复的Ack
